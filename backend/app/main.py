@@ -1,42 +1,75 @@
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+"""
+VoxIA Backend - FastAPI
 
+Pipeline de IA:
+  Audio → Whisper (ASR) → Texto → FLAN-T5 (NLP) → Resumen + Tareas
+"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
-from app.api.dependencies import get_summarization_service, get_transcription_service
-from app.api.v1.audio_router import router as audio_router
+from app.core.config import settings
+from app.routers import auth, audio
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """
-    Load AI models eagerly at startup so the first request is not delayed
-    by model download/initialization.
-    """
-    get_transcription_service()   # warms up Whisper
-    get_summarization_service()   # warms up Flan-T5
+async def lifespan(app: FastAPI):
+    print("🚀 VoxIA Backend iniciando...")
+    print(f"   Whisper model: {settings.WHISPER_MODEL}")
+    print(f"   FLAN-T5 model: {settings.FLAN_T5_MODEL}")
+    print(f"   Frontend URL:  {settings.FRONTEND_URL}")
+    print("✅ Backend listo en http://localhost:8000")
+    print("📖 Documentación: http://localhost:8000/docs")
     yield
+    print("🛑 VoxIA Backend apagando...")
 
 
 app = FastAPI(
     title="VoxIA API",
-    description="Audio transcription and meeting summarization powered by Whisper and Flan-T5.",
-    version="0.1.0",
+    description="Backend de transcripción y análisis de reuniones con IA",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
+# CORS - permite peticiones del frontend Next.js
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[
+        settings.FRONTEND_URL,
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,  # Necesario para cookies httpOnly
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(audio_router, prefix="/api/v1")
+# Rutas
+app.include_router(auth.router)
+app.include_router(audio.router)
 
 
-@app.get("/health", tags=["Health"])
-def health_check() -> dict[str, str]:
+@app.get("/")
+async def root():
+    return {
+        "app": "VoxIA API",
+        "version": "1.0.0",
+        "status": "running",
+        "docs": "/docs",
+        "endpoints": {
+            "auth": {
+                "login": "POST /api/auth/login",
+                "refresh": "POST /api/auth/refresh",
+                "logout": "POST /api/auth/logout",
+            },
+            "audio": {
+                "upload": "POST /api/audio/upload",
+                "health": "GET /api/audio/health",
+            },
+        },
+    }
+
+
+@app.get("/health")
+async def health():
     return {"status": "ok"}

@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package voxia;
+
+// ─── Servicio principal de análisis de audio ──────────────────────────────────
+service VoxIAService {
+  // Analiza texto ya transcrito y devuelve resumen, puntos clave, tareas y decisiones
+  rpc AnalyzeText (AnalyzeRequest) returns (AnalyzeResponse);
+
+  // Devuelve el estado de salud del servidor gRPC
+  rpc HealthCheck (HealthRequest) returns (HealthResponse);
+}
+
+// ─── Mensajes ─────────────────────────────────────────────────────────────────
+message AnalyzeRequest {
+  string transcript = 1;   // Texto transcrito por Whisper
+  string language   = 2;   // "es" o "en"
+}
+
+message AnalyzeResponse {
+  string summary            = 1;
+  repeated string key_points = 2;
+  repeated string tasks      = 3;
+  repeated string decisions  = 4;
+  bool   success            = 5;
+  string error_message      = 6;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status  = 1;   // "ok" o "error"
+  string message = 2;
+}

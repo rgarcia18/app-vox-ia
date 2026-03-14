@@ -1,0 +1,7 @@
+artifact_location: file:///C:/Users/user/Desktop/app-vox-ia/backend/mlruns/699597640788811626
+creation_time: 1773459205112
+experiment_id: '699597640788811626'
+last_update_time: 1773459205112
+lifecycle_stage: active
+name: VoxIA - Pipeline de Análisis de Audio
+workspace: default

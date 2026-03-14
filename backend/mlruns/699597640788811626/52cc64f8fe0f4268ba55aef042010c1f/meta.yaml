@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/user/Desktop/app-vox-ia/backend/mlruns/699597640788811626/52cc64f8fe0f4268ba55aef042010c1f/artifacts
+end_time: 1773460090328
+entry_point_name: ''
+experiment_id: '699597640788811626'
+lifecycle_stage: active
+run_id: 52cc64f8fe0f4268ba55aef042010c1f
+run_name: carefree-elk-124
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1773460090271
+status: 3
+tags: []
+user_id: user

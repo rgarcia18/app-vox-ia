@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { ArrowLeft, Upload, File, X, Loader2, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Upload, File, X, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import api from '@/services/api'
+import { ResultsPanel, type AnalysisResult } from './ResultsPanel'
 
 interface FileUploadProps {
   onBack: () => void
@@ -11,7 +13,6 @@ interface FileUploadProps {
 
 type UploadState = 'idle' | 'uploading' | 'done'
 
-const ACCEPTED_FORMATS = ['audio/mpeg', 'audio/wav', 'audio/x-m4a', 'audio/mp4', 'audio/mp3', 'audio/wave']
 const MAX_SIZE_MB = 100
 
 export function FileUpload({ onBack }: FileUploadProps) {
@@ -20,6 +21,8 @@ export function FileUpload({ onBack }: FileUploadProps) {
   const [language, setLanguage] = useState<'es' | 'en'>('es')
   const [uploadState, setUploadState] = useState<UploadState>('idle')
   const [progress, setProgress] = useState(0)
+  const [statusMsg, setStatusMsg] = useState('')
+  const [result, setResult] = useState<AnalysisResult | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const validateFile = (f: File): boolean => {
@@ -27,7 +30,7 @@ export function FileUpload({ onBack }: FileUploadProps) {
       toast.error(`El archivo supera los ${MAX_SIZE_MB}MB`)
       return false
     }
-    const validExt = /\.(mp3|wav|m4a)$/i.test(f.name)
+    const validExt = /\.(mp3|wav|m4a|ogg|flac|mp4)$/i.test(f.name)
     if (!validExt) {
       toast.error('Formato no soportado. Usa MP3, WAV o M4A')
       return false
@@ -40,6 +43,7 @@ export function FileUpload({ onBack }: FileUploadProps) {
       setFile(f)
       setUploadState('idle')
       setProgress(0)
+      setResult(null)
     }
   }
 
@@ -50,40 +54,74 @@ export function FileUpload({ onBack }: FileUploadProps) {
     if (dropped) handleFile(dropped)
   }, [])
 
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const onDragLeave = () => setIsDragging(false)
-
   const handleProcess = async () => {
     if (!file) return
     setUploadState('uploading')
-    setProgress(0)
+    setProgress(5)
+    setStatusMsg('Enviando audio al servidor...')
 
-    // Simular progreso
-    const sim = setInterval(() => {
-      setProgress(p => {
-        if (p >= 90) {
-          clearInterval(sim)
-          return 90
-        }
-        return p + Math.random() * 15
+    // Progreso simulado mientras espera el backend
+    const steps = [
+      { pct: 15, msg: 'Cargando modelos de IA...', delay: 1200 },
+      { pct: 30, msg: 'Transcribiendo con Whisper...', delay: 3000 },
+      { pct: 60, msg: 'Generando resumen ejecutivo...', delay: 5000 },
+      { pct: 75, msg: 'Extrayendo puntos clave...', delay: 7000 },
+      { pct: 88, msg: 'Identificando tareas y decisiones...', delay: 9000 },
+    ]
+
+    const timers: ReturnType<typeof setTimeout>[] = []
+    steps.forEach(({ pct, msg, delay }) => {
+      timers.push(setTimeout(() => {
+        setProgress(pct)
+        setStatusMsg(msg)
+      }, delay))
+    })
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('language', language)
+
+      const { data } = await api.post('/api/audio/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
-    }, 300)
 
-    await new Promise(r => setTimeout(r, 2500))
-    clearInterval(sim)
-    setProgress(100)
-    setUploadState('done')
-    toast.success('Audio procesado correctamente')
+      timers.forEach(clearTimeout)
+      setProgress(100)
+      setStatusMsg('¡Análisis completado!')
+      setUploadState('done')
+      setResult(data)
+      toast.success('Audio analizado correctamente')
+    } catch (err: unknown) {
+      timers.forEach(clearTimeout)
+      setUploadState('idle')
+      setProgress(0)
+      setStatusMsg('')
+      const e = err as { response?: { data?: { message?: string } } }
+      toast.error(e?.response?.data?.message || 'Error al procesar el audio')
+    }
   }
 
   const formatSize = (bytes: number) =>
     bytes < 1024 * 1024
       ? `${(bytes / 1024).toFixed(0)} KB`
       : `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+
+  // Si ya hay resultado, mostrar el panel de resultados
+  if (result) {
+    return (
+      <div>
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-white/40 hover:text-white/70 text-sm mb-6 transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          Volver al inicio
+        </button>
+        <ResultsPanel result={result} onReset={() => { setResult(null); setFile(null); setUploadState('idle') }} />
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -102,11 +140,12 @@ export function FileUpload({ onBack }: FileUploadProps) {
         {/* Dropzone */}
         <div
           onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onClick={() => !file && inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+          onDragLeave={() => setIsDragging(false)}
+          onClick={() => !file && uploadState === 'idle' && inputRef.current?.click()}
           className={`
-            relative rounded-xl border-2 border-dashed transition-all duration-300 cursor-pointer
+            relative rounded-xl border-2 border-dashed transition-all duration-300
+            ${uploadState === 'uploading' ? 'cursor-default' : 'cursor-pointer'}
             ${isDragging
               ? 'border-violet-500/60 bg-violet-500/8'
               : file
@@ -138,7 +177,7 @@ export function FileUpload({ onBack }: FileUploadProps) {
                 >
                   Seleccionar archivo
                 </button>
-                <p className="text-white/20 text-xs mt-4">Formatos soportados: MP3, WAV, M4A (máx. {MAX_SIZE_MB}MB)</p>
+                <p className="text-white/20 text-xs mt-4">Formatos: MP3, WAV, M4A (máx. {MAX_SIZE_MB}MB)</p>
               </motion.div>
             ) : (
               <motion.div
@@ -146,40 +185,41 @@ export function FileUpload({ onBack }: FileUploadProps) {
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex items-center gap-4 p-5"
+                className="p-5"
               >
-                <div className="w-12 h-12 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <File className="w-5 h-5 text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white/80 text-sm font-medium truncate">{file.name}</p>
-                  <p className="text-white/30 text-xs">{formatSize(file.size)}</p>
-                  {uploadState === 'uploading' && (
-                    <div className="mt-2">
-                      <div className="h-1 bg-white/8 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-violet-500 to-indigo-400 rounded-full"
-                          animate={{ width: `${progress}%` }}
-                          transition={{ duration: 0.3 }}
-                        />
-                      </div>
-                      <p className="text-white/30 text-[11px] mt-1">{Math.round(progress)}% procesado...</p>
-                    </div>
-                  )}
-                  {uploadState === 'done' && (
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-400 text-xs">Procesado correctamente</span>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <File className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/80 text-sm font-medium truncate">{file.name}</p>
+                    <p className="text-white/30 text-xs">{formatSize(file.size)}</p>
+                  </div>
+                  {uploadState === 'idle' && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setFile(null) }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/8 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   )}
                 </div>
-                {uploadState === 'idle' && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setFile(null) }}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/8 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+
+                {/* Barra de progreso */}
+                {uploadState === 'uploading' && (
+                  <div className="mt-4">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-white/40 text-xs">{statusMsg}</span>
+                      <span className="text-white/30 text-xs">{Math.round(progress)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-violet-500 to-indigo-400 rounded-full"
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    </div>
+                  </div>
                 )}
               </motion.div>
             )}
@@ -189,11 +229,12 @@ export function FileUpload({ onBack }: FileUploadProps) {
         <input
           ref={inputRef}
           type="file"
-          accept=".mp3,.wav,.m4a"
+          accept=".mp3,.wav,.m4a,.ogg,.flac"
           className="hidden"
           onChange={e => {
             const f = e.target.files?.[0]
             if (f) handleFile(f)
+            e.target.value = ''
           }}
         />
 
@@ -205,7 +246,8 @@ export function FileUpload({ onBack }: FileUploadProps) {
               <button
                 key={lang}
                 onClick={() => setLanguage(lang)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                disabled={uploadState === 'uploading'}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border disabled:opacity-50 ${
                   language === lang
                     ? 'bg-violet-500/20 border-violet-500/40 text-violet-300'
                     : 'bg-white/4 border-white/8 text-white/40 hover:text-white/60 hover:bg-white/8'
@@ -217,7 +259,7 @@ export function FileUpload({ onBack }: FileUploadProps) {
           </div>
         </div>
 
-        {/* Process button */}
+        {/* Botón procesar */}
         <motion.button
           whileHover={file && uploadState === 'idle' ? { scale: 1.01 } : {}}
           whileTap={file && uploadState === 'idle' ? { scale: 0.98 } : {}}
@@ -234,15 +276,10 @@ export function FileUpload({ onBack }: FileUploadProps) {
           {uploadState === 'uploading' ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Procesando audio...
-            </>
-          ) : uploadState === 'done' ? (
-            <>
-              <CheckCircle className="w-4 h-4" />
-              Procesado
+              Analizando audio...
             </>
           ) : (
-            'Procesar Audio'
+            'Procesar y Analizar Audio'
           )}
         </motion.button>
       </div>

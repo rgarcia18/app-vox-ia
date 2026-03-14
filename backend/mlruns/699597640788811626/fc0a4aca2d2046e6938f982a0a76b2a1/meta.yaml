@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/user/Desktop/app-vox-ia/backend/mlruns/699597640788811626/fc0a4aca2d2046e6938f982a0a76b2a1/artifacts
+end_time: 1773459205384
+entry_point_name: ''
+experiment_id: '699597640788811626'
+lifecycle_stage: active
+run_id: fc0a4aca2d2046e6938f982a0a76b2a1
+run_name: abrasive-ant-513
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1773459205320
+status: 3
+tags: []
+user_id: user
