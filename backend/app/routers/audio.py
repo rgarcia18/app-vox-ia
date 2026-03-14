@@ -11,7 +11,6 @@ from app.core.config import settings
 from app.services.ai_service import transcribe_audio
 from app.services.pdf_service import generate_pdf_report
 from app.services.mlflow_tracker import log_pipeline_run, log_error_run
-from app.grpc_service.grpc_client import analyze_text_via_grpc
 
 router = APIRouter(prefix="/api/audio", tags=["audio"])
 
@@ -104,7 +103,26 @@ async def upload_audio(
         # ── 2. Análisis NLP vía gRPC (con fallback directo) ───────────────────
         print("📝  [2/2] Analizando texto vía gRPC...")
         t1 = time.time()
-        analysis = analyze_text_via_grpc(transcript, lang)
+        # Lazy import to avoid module-level import errors
+        try:
+            from app.grpc_service.grpc_client import analyze_text_via_grpc
+        except (ImportError, ModuleNotFoundError):
+            # If gRPC fails, use fallback directly
+            from app.services.ai_service import (
+                generate_summary,
+                extract_key_points,
+                extract_tasks,
+                extract_decisions,
+            )
+            analysis = {
+                "summary": generate_summary(transcript, lang),
+                "key_points": extract_key_points(transcript, lang),
+                "tasks": extract_tasks(transcript, lang),
+                "decisions": extract_decisions(transcript, lang),
+                "via_grpc": False,
+            }
+        else:
+            analysis = analyze_text_via_grpc(transcript, lang)
         analysis_time = round(time.time() - t1, 2)
 
         total_time = round(time.time() - total_start, 2)
