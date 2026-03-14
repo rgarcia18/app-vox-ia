@@ -6,13 +6,19 @@ Si el servidor gRPC no está disponible, cae en modo fallback
 usando las funciones directamente (sin gRPC).
 """
 
-import grpc
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app.grpc_service import voxia_pb2, voxia_pb2_grpc
+# Try to import gRPC - if it fails, we'll use fallback
+try:
+    import grpc
+    from app.grpc_service import voxia_pb2, voxia_pb2_grpc
+    GRPC_AVAILABLE = True
+except (ImportError, ModuleNotFoundError) as e:
+    GRPC_AVAILABLE = False
+    print(f"⚠️  gRPC no disponible: {e}")
 
 GRPC_HOST = os.getenv("GRPC_HOST", "localhost")
 GRPC_PORT = int(os.getenv("GRPC_PORT", "50051"))
@@ -27,6 +33,10 @@ def analyze_text_via_grpc(transcript: str, language: str = "es") -> dict:
     Returns:
         dict con keys: summary, key_points, tasks, decisions, via_grpc
     """
+    if not GRPC_AVAILABLE:
+        print("⚠️  gRPC no disponible — usando fallback directo")
+        return _fallback(transcript, language)
+    
     try:
         channel = grpc.insecure_channel(f"{GRPC_HOST}:{GRPC_PORT}")
         stub = voxia_pb2_grpc.VoxIAServiceStub(channel)
@@ -79,6 +89,9 @@ def _fallback(transcript: str, language: str) -> dict:
 
 def health_check_grpc() -> bool:
     """Verifica si el servidor gRPC está operativo."""
+    if not GRPC_AVAILABLE:
+        return False
+    
     try:
         channel = grpc.insecure_channel(f"{GRPC_HOST}:{GRPC_PORT}")
         stub = voxia_pb2_grpc.VoxIAServiceStub(channel)

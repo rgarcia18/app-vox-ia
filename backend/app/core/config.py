@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Usuario admin por defecto
     ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "password123"
+    ADMIN_PASSWORD: str = "admin123"
     ADMIN_DISPLAY_NAME: str = "Administrador VoxIA"
 
     class Config:

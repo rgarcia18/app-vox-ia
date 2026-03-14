@@ -7,8 +7,8 @@ interface User {
   id: string
   username: string
   displayName: string
-  createdAt: Date
-  lastLoginAt?: Date
+  createdAt: string
+  lastLoginAt?: string
 }
 
 interface DashboardHeaderProps {
