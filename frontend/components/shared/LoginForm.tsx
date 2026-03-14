@@ -72,7 +72,11 @@ export function LoginForm() {
 
       // Almacenar access token y datos de usuario
       setAccessToken(response.access_token)
-      setUser(response.user)
+      setUser({
+        ...response.user,
+        createdAt: new Date(response.user.createdAt),
+        lastLoginAt: response.user.lastLoginAt ? new Date(response.user.lastLoginAt) : undefined,
+      })
 
       // Animación de salida antes de redireccionar
       setIsExiting(true)
