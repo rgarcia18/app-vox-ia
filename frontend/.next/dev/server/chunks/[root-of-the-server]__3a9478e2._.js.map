@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 46, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/user/Desktop/app-vox-ia/frontend/proxy.ts"],"sourcesContent":["import { NextResponse } from 'next/server'\r\nimport type { NextRequest } from 'next/server'\r\n\r\nexport function proxy(request: NextRequest) {\r\n  return NextResponse.next()\r\n}\r\n\r\nexport const config = {\r\n  matcher: ['/', '/dashboard/:path*']\r\n}"],"names":[],"mappings":";;;;;;AAAA;;AAGO,SAAS,MAAM,OAAoB;IACxC,OAAO,8IAAY,CAAC,IAAI;AAC1B;AAEO,MAAM,SAAS;IACpB,SAAS;QAAC;QAAK;KAAoB;AACrC"}}]
-}
