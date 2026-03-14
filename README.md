@@ -9,12 +9,12 @@
 
 ## 👥 Autores
 
-| Nombre | Código |
-|--------|--------|
-| Santiago Londoño Méndez | 22602902 |
-| Andrés Rojas Zúñiga | 22507348 |
-| Rubén Darío García Morales | 22507004 |
-| David Ayala Caro | 22507570 |
+| Nombre | Código | GitHub |
+|--------|--------|--------|
+| Santiago Londoño Méndez | 22602902 | [@SANTIAGOlmF14](https://github.com/SANTIAGOlmF14) |
+| Andrés Rojas Zúñiga | 22507348 | [@androjzu7-stack](https://github.com/androjzu7-stack) |
+| Rubén Darío García Morales | 22507004 | [@rgarcia18](https://github.com/rgarcia18) |
+| David Ayala Caro | 22507570 | [@davidr-ac](https://github.com/davidr-ac) |
 
 ---
 
