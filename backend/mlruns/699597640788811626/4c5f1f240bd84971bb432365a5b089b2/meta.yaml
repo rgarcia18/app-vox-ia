@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/user/Desktop/app-vox-ia/backend/mlruns/699597640788811626/4c5f1f240bd84971bb432365a5b089b2/artifacts
+end_time: 1773460469092
+entry_point_name: ''
+experiment_id: '699597640788811626'
+lifecycle_stage: active
+run_id: 4c5f1f240bd84971bb432365a5b089b2
+run_name: bright-moose-433
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1773460469037
+status: 3
+tags: []
+user_id: user

@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/user/Desktop/app-vox-ia/backend/mlruns/699597640788811626/f248f2b11320499b815d5a4a4812c80a/artifacts
+end_time: 1773459514870
+entry_point_name: ''
+experiment_id: '699597640788811626'
+lifecycle_stage: active
+run_id: f248f2b11320499b815d5a4a4812c80a
+run_name: placid-rook-667
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1773459514816
+status: 3
+tags: []
+user_id: user
