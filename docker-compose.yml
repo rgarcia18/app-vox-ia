@@ -1,69 +1,32 @@
-version: "3.9"
-
 services:
-
-  # ── Backend FastAPI ──────────────────────────────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: voxia-backend
-    restart: unless-stopped
     ports:
       - "8000:8000"
-      - "5000:5000"
-    environment:
-      - WHISPER_MODEL=base
-      - FLAN_T5_MODEL=google/flan-t5-base
-      - FRONTEND_URL=http://localhost:3000
-      - MAX_FILE_SIZE_MB=100
-      - JWT_SECRET=voxia-super-secret-key-cambia-esto-en-produccion
-      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=15
-      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
-      - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=password123
-      - ADMIN_DISPLAY_NAME=Administrador VoxIA
+    env_file:
+      - path: ./backend/.env
+        required: false
     volumes:
-      - voxia_uploads:/app/uploads
-      - voxia_temp:/app/temp
-      - voxia_models:/root/.cache/huggingface
-    networks:
-      - voxia-network
-   
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      - ./backend/mlruns:/app/mlruns
+    restart: unless-stopped
 
-  # ── Frontend Next.js ─────────────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        BACKEND_URL: http://backend:8000
     container_name: voxia-frontend
-    restart: unless-stopped 
     ports:
       - "3000:3000"
-     
+    env_file:
+      - path: ./frontend/.env
+        required: false
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - BACKEND_URL=http://backend:8000
     depends_on:
-      backend:
-
-      
-        condition: service_healthy
-    networks:
-      - voxia-network
-
-# ── Volúmenes persistentes ───────────────────────────────────────────────────
-volumes:
-  voxia_uploads:
-  voxia_temp:
-  voxia_models:    # Caché de modelos Whisper y FLAN-T5 (evita re-descargar)
-
-# ── Red interna ──────────────────────────────────────────────────────────────
-networks:
-  voxia-network:
-    driver: bridge
+      - backend
+    restart: unless-stopped

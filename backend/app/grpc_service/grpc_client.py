@@ -61,18 +61,14 @@ def analyze_text_via_grpc(transcript: str, language: str = "es") -> dict:
 
 
 def _fallback(transcript: str, language: str) -> dict:
-    """Fallback: llama a las funciones de análisis directamente sin gRPC."""
-    from app.services.ai_service import (
-        generate_summary,
-        extract_key_points,
-        extract_tasks,
-        extract_decisions,
-    )
+    """Fallback: analiza directamente con FlanAdapter sin gRPC."""
+    from app.adapters.outbound.ai.flan.flan_adapter import FlanAdapter
+    result = FlanAdapter().analyze(transcript, language)
     return {
-        "summary": generate_summary(transcript, language),
-        "key_points": extract_key_points(transcript, language),
-        "tasks": extract_tasks(transcript, language),
-        "decisions": extract_decisions(transcript, language),
+        "summary": result.summary,
+        "key_points": result.key_points,
+        "tasks": result.tasks,
+        "decisions": result.decisions,
         "via_grpc": False,
     }
 

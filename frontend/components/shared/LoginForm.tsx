@@ -77,6 +77,7 @@ export function LoginForm() {
         createdAt: new Date(response.user.createdAt),
         lastLoginAt: response.user.lastLoginAt ? new Date(response.user.lastLoginAt) : undefined,
       })
+
       // Animación de salida antes de redireccionar
       setIsExiting(true)
       setTimeout(() => {

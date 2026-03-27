@@ -15,10 +15,20 @@ frontend/node_modules
 
 # next.js
 /.next/
+frontend/.next/
 /out/
 
 # production
 /build
+backend/build
+
+# Python build artifacts
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.db
 
 # misc
 .DS_Store

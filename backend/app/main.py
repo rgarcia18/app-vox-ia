@@ -8,8 +8,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.core.config import settings
-from app.routers import auth, audio
+from app.infrastructure.config.settings import settings
+from app.adapters.inbound.http.routers import auth, audio
+from app.infrastructure.exceptions.handlers import register_exception_handlers
 
 
 @asynccontextmanager
@@ -31,7 +32,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS - permite peticiones del frontend Next.js
+register_exception_handlers(app)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -39,12 +41,11 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ],
-    allow_credentials=True,  # Necesario para cookies httpOnly
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Rutas
 app.include_router(auth.router)
 app.include_router(audio.router)
 

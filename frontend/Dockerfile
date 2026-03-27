@@ -1,41 +1,28 @@
-# ── Stage 1: dependencies ─────────────────────────────────────────────────────
-FROM node:20-alpine AS deps
-
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# ── Stage 2: builder ──────────────────────────────────────────────────────────
+# Etapa de construcción
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
+# Build arg para que Next.js hornee la URL del backend en el rewrite
+ARG BACKEND_URL=http://backend:8000
+ENV BACKEND_URL=${BACKEND_URL}
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY . .
-
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXT_PUBLIC_API_URL=http://localhost:8000
-
 RUN npm run build
 
-# ── Stage 3: runtime ──────────────────────────────────────────────────────────
-FROM node:20-alpine AS runtime
+# Etapa de producción
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXT_PUBLIC_API_URL=http://backend:8000
-
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 3000
 
