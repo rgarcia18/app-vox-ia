@@ -20,7 +20,7 @@ from concurrent import futures
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.grpc_service import voxia_pb2, voxia_pb2_grpc
-from app.services.ai_service import (
+from app.adapters.outbound.ai.flan.flan_adapter import (
     generate_summary,
     extract_key_points,
     extract_tasks,
