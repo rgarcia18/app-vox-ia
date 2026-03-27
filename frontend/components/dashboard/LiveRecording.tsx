@@ -31,6 +31,14 @@ export function LiveRecording({ onBack }: LiveRecordingProps) {
   const animFrameRef = useRef<number | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  const cleanup = () => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+    mediaRecorderRef.current = null
+    analyserRef.current = null
+  }
+
   useEffect(() => {
     navigator.mediaDevices?.enumerateDevices().then((devs) => {
       setDevices(devs.filter(d => d.kind === 'audioinput'))
@@ -47,14 +55,6 @@ export function LiveRecording({ onBack }: LiveRecordingProps) {
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [recordingState])
-
-  const cleanup = () => {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
-    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop())
-    streamRef.current = null
-    mediaRecorderRef.current = null
-    analyserRef.current = null
-  }
 
   const startAudioLevel = (stream: MediaStream) => {
     try {
