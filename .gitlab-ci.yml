@@ -118,7 +118,7 @@ build:frontend:
 
 # ─── DEPLOY ────────────────────────────────────────────────────────────────────
 
-deploy:production:
+deploy:backend:
   stage: deploy
   image: alpine:latest
   before_script:
@@ -128,36 +128,58 @@ deploy:production:
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - ssh-keyscan -H $DO_HOST >> ~/.ssh/known_hosts
   script:
-    # Sincroniza el compose file con la versión del repo antes de deployar
     - scp docker-compose.prod.yml $DO_USER@$DO_HOST:/opt/voxia/docker-compose.prod.yml
     - |
       ssh $DO_USER@$DO_HOST "
         docker login -u $DOCKERHUB_USER -p $DOCKERHUB_TOKEN &&
         docker pull $BACKEND_IMAGE:latest &&
+        cd /opt/voxia &&
+        IMAGE_TAG=$IMAGE_TAG \
+        BACKEND_IMAGE=$BACKEND_IMAGE \
+        FRONTEND_IMAGE=$FRONTEND_IMAGE \
+        docker compose -f docker-compose.prod.yml up -d --no-build backend &&
+        docker image prune -f
+      "
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes: *backend_changes
+    - if: $CI_COMMIT_BRANCH == "master"
+      changes: *backend_changes
+  needs:
+    - job: build:backend
+  environment:
+    name: production
+    url: http://$DO_HOST:8000
+
+deploy:frontend:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$DO_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H $DO_HOST >> ~/.ssh/known_hosts
+  script:
+    - scp docker-compose.prod.yml $DO_USER@$DO_HOST:/opt/voxia/docker-compose.prod.yml
+    - |
+      ssh $DO_USER@$DO_HOST "
+        docker login -u $DOCKERHUB_USER -p $DOCKERHUB_TOKEN &&
         docker pull $FRONTEND_IMAGE:latest &&
         cd /opt/voxia &&
         IMAGE_TAG=$IMAGE_TAG \
         BACKEND_IMAGE=$BACKEND_IMAGE \
         FRONTEND_IMAGE=$FRONTEND_IMAGE \
-        docker compose -f docker-compose.prod.yml up -d --no-build &&
+        docker compose -f docker-compose.prod.yml up -d --no-build frontend &&
         docker image prune -f
       "
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      changes:
-        - backend/**/*
-        - frontend/**/*
-        - .gitlab-ci.yml
+      changes: *frontend_changes
     - if: $CI_COMMIT_BRANCH == "master"
-      changes:
-        - backend/**/*
-        - frontend/**/*
-        - .gitlab-ci.yml
+      changes: *frontend_changes
   needs:
-    - job: build:backend
-      optional: true
     - job: build:frontend
-      optional: true
   environment:
     name: production
-    url: https://$DO_HOST
+    url: http://$DO_HOST:3000
