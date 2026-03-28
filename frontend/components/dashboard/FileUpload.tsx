@@ -134,7 +134,7 @@ export function FileUpload({ onBack }: FileUploadProps) {
       </button>
 
       <div className="bg-white/[0.04] backdrop-blur-sm border border-white/8 rounded-2xl p-7">
-        <h2 className="text-xl font-bold text-white mb-1 tracking-tight">Cargar Archivo de Audio</h2>
+        <h2 className="text-xl font-bold text-white mb-1 tracking-tight">Cargar Archivo de Audio - zDSxBiAy)bj%6h-3PUnzTa1x9Bj4e</h2>
         <p className="text-white/35 text-sm mb-6">Sube un archivo pregrabado para transcribir y generar resumen</p>
 
         {/* Dropzone */}
