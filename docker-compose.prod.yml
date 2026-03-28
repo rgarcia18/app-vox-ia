@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ${BACKEND_IMAGE:-DOCKERHUB_USER/voxia-backend}:${IMAGE_TAG:-latest}
+    image: ${BACKEND_IMAGE:-DOCKERHUB_USER/voxia-backend}:${BACKEND_TAG:-latest}
     container_name: voxia-backend
     ports:
       - "8000:8000"
@@ -18,7 +18,7 @@ services:
       start_period: 120s
 
   frontend:
-    image: ${FRONTEND_IMAGE:-DOCKERHUB_USER/voxia-frontend}:${IMAGE_TAG:-latest}
+    image: ${FRONTEND_IMAGE:-DOCKERHUB_USER/voxia-frontend}:${FRONTEND_TAG:-latest}
     container_name: voxia-frontend
     ports:
       - "3000:3000"

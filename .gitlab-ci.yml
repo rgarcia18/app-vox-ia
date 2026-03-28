@@ -134,9 +134,10 @@ deploy:backend:
         docker login -u $DOCKERHUB_USER -p $DOCKERHUB_TOKEN &&
         docker pull $BACKEND_IMAGE:latest &&
         cd /opt/voxia &&
-        IMAGE_TAG=$IMAGE_TAG \
         BACKEND_IMAGE=$BACKEND_IMAGE \
         FRONTEND_IMAGE=$FRONTEND_IMAGE \
+        BACKEND_TAG=$IMAGE_TAG \
+        FRONTEND_TAG=latest \
         docker compose -f docker-compose.prod.yml up -d --no-build backend &&
         docker image prune -f
       "
@@ -167,9 +168,10 @@ deploy:frontend:
         docker login -u $DOCKERHUB_USER -p $DOCKERHUB_TOKEN &&
         docker pull $FRONTEND_IMAGE:latest &&
         cd /opt/voxia &&
-        IMAGE_TAG=$IMAGE_TAG \
         BACKEND_IMAGE=$BACKEND_IMAGE \
         FRONTEND_IMAGE=$FRONTEND_IMAGE \
+        BACKEND_TAG=latest \
+        FRONTEND_TAG=$IMAGE_TAG \
         docker compose -f docker-compose.prod.yml up -d --no-build frontend &&
         docker image prune -f
       "
