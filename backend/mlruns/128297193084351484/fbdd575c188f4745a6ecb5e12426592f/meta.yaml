@@ -1,0 +1,15 @@
+artifact_uri: /mlruns/128297193084351484/fbdd575c188f4745a6ecb5e12426592f/artifacts
+end_time: 1773508109921
+entry_point_name: ''
+experiment_id: '128297193084351484'
+lifecycle_stage: active
+run_id: fbdd575c188f4745a6ecb5e12426592f
+run_name: sanity-check-2026-03-14
+run_uuid: fbdd575c188f4745a6ecb5e12426592f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1773508109596
+status: 3
+tags: []
+user_id: appuser
